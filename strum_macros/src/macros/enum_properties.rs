@@ -79,6 +79,12 @@ pub fn enum_properties_inner(ast: &DeriveInput) -> syn::Result<TokenStream> {
     if string_props.len() < variants.len() {
         string_props.push(quote! { _ => ::core::option::Option::None });
     }
+    if bool_props.len() < variants.len() {
+        bool_props.push(quote! { _ => ::core::option::Option::None });
+    }
+    if num_props.len() < variants.len() {
+        num_props.push(quote! { _ => ::core::option::Option::None });
+    }
 
     Ok(quote! {
         impl #impl_generics #strum_module_path::EnumProperty for #name #ty_generics #where_clause {
