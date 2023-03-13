@@ -18,6 +18,9 @@ pub fn enum_properties_inner(ast: &DeriveInput) -> syn::Result<TokenStream> {
     let mut string_props = Vec::new();
     let mut num_props = Vec::new();
     let mut bool_props = Vec::new();
+
+    let mut key_counts = std::collections::HashMap::new();
+
     for variant in variants {
         let ident = &variant.ident;
         let variant_properties = variant.get_variant_properties()?;
@@ -47,6 +50,7 @@ pub fn enum_properties_inner(ast: &DeriveInput) -> syn::Result<TokenStream> {
                     bool_arms.push(quote! { #key => ::core::option::Option::Some( #b )})
                 }
             }
+            *key_counts.entry(key.clone()).or_insert(0) += 1;
         }
 
         string_arms.push(quote! { _ => ::core::option::Option::None });
@@ -84,6 +88,15 @@ pub fn enum_properties_inner(ast: &DeriveInput) -> syn::Result<TokenStream> {
     }
     if num_props.len() < variants.len() {
         num_props.push(quote! { _ => ::core::option::Option::None });
+    }
+
+    for required_key in type_properties.requirements {
+        let count = key_counts.remove(&required_key).unwrap_or(0);
+        if count != variants.len() {
+            let key_str = required_key.value();
+            let msg = format!("Requirement '{key_str}' missing on some variants");
+            return Err(syn::Error::new(required_key.span(), msg));
+        }
     }
 
     Ok(quote! {

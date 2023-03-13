@@ -19,6 +19,7 @@ pub mod kw {
     // enum metadata
     custom_keyword!(serialize_all);
     custom_keyword!(use_phf);
+    custom_keyword!(requires);
 
     // enum discriminant metadata
     custom_keyword!(derive);
@@ -47,6 +48,10 @@ pub enum EnumMeta {
         crate_module_path: Path,
     },
     UsePhf(kw::use_phf),
+    Requires {
+        kw: kw::requires,
+        props: Vec<LitStr>,
+    },
 }
 
 impl Parse for EnumMeta {
@@ -71,6 +76,18 @@ impl Parse for EnumMeta {
             Ok(EnumMeta::AsciiCaseInsensitive(input.parse()?))
         } else if lookahead.peek(kw::use_phf) {
             Ok(EnumMeta::UsePhf(input.parse()?))
+        } else if lookahead.peek(kw::requires) {
+            let kw = input.parse()?;
+            let content;
+            parenthesized!(content in input);
+            let props = content.parse_terminated::<_, Token![,]>(Ident::parse)?;
+            Ok(EnumMeta::Requires {
+                kw,
+                props: props
+                    .into_iter()
+                    .map(|k| LitStr::new(&k.to_string(), k.span()))
+                    .collect(),
+            })
         } else {
             Err(lookahead.error())
         }
@@ -84,6 +101,7 @@ impl Spanned for EnumMeta {
             EnumMeta::AsciiCaseInsensitive(kw) => kw.span(),
             EnumMeta::Crate { kw, .. } => kw.span(),
             EnumMeta::UsePhf(use_phf) => use_phf.span(),
+            EnumMeta::Requires { kw, .. } => kw.span(),
         }
     }
 }
