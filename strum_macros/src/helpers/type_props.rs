@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::default::Default;
-use syn::{parse_quote, DeriveInput, Ident, Path, Visibility};
+use syn::{parse_quote, DeriveInput, Ident, LitStr, Path, Visibility};
 
 use super::case_style::CaseStyle;
 use super::metadata::{DeriveInputExt, EnumDiscriminantsMeta, EnumMeta};
@@ -21,6 +21,7 @@ pub struct StrumTypeProperties {
     pub discriminant_others: Vec<TokenStream>,
     pub discriminant_vis: Option<Visibility>,
     pub use_phf: bool,
+    pub requirements: Vec<LitStr>,
 }
 
 impl HasTypeProperties for DeriveInput {
@@ -70,6 +71,9 @@ impl HasTypeProperties for DeriveInput {
 
                     crate_module_path_kw = Some(kw);
                     output.crate_module_path = Some(crate_module_path);
+                }
+                EnumMeta::Requires { props, .. } => {
+                    output.requirements.extend(props);
                 }
             }
         }

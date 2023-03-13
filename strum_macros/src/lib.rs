@@ -567,6 +567,9 @@ pub fn enum_messages(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 /// number of variants and properties, but scales linearly with the number of variants so may not
 /// be the best choice in all situations.
 ///
+/// Additionally, you can ensure at compile-time that a property must exist on every variant
+/// by adding a `strum(requires(name))` attribute to the enum as a whole.
+///
 /// ```
 ///
 /// use strum_macros;
@@ -574,6 +577,7 @@ pub fn enum_messages(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 /// use strum::EnumProperty;
 ///
 /// #[derive(strum_macros::EnumProperty, Debug)]
+/// #[strum(requires(Red, Green, Blue))]
 /// #[allow(dead_code)]
 /// enum Color {
 ///     #[strum(props(Red = "255", Blue = "255", Green = "255"))]
