@@ -10,6 +10,7 @@ use syn::{
 };
 
 use super::case_style::CaseStyle;
+use super::PropertyValue;
 
 pub mod kw {
     use syn::custom_keyword;
@@ -184,7 +185,7 @@ pub enum VariantMeta {
     },
     Props {
         kw: kw::props,
-        props: Vec<(LitStr, LitStr)>,
+        props: Vec<(LitStr, PropertyValue)>,
     },
 }
 
@@ -242,7 +243,7 @@ impl Parse for VariantMeta {
     }
 }
 
-struct Prop(Ident, LitStr);
+struct Prop(Ident, PropertyValue);
 
 impl Parse for Prop {
     fn parse(input: ParseStream) -> syn::Result<Self> {
@@ -250,7 +251,14 @@ impl Parse for Prop {
 
         let k = Ident::parse_any(input)?;
         let _: Token![=] = input.parse()?;
-        let v = input.parse()?;
+        let v;
+        if input.peek(syn::LitBool) {
+            v = PropertyValue::Bool(input.parse()?);
+        } else if input.peek(syn::LitInt) {
+            v = PropertyValue::Num(input.parse()?);
+        } else {
+            v = PropertyValue::Str(input.parse()?);
+        };
 
         Ok(Prop(k, v))
     }
